@@ -1,6 +1,0 @@
-recorder.cpp:8:1: error: ‘array’ in namespace ‘std’ does not name a type
- std::array <int, 2> start;
- ^
-recorder.cpp:9:1: error: ‘array’ in namespace ‘std’ does not name a type
- std::array <int, 2> end;
- ^
