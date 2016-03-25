@@ -1,6 +1,0 @@
-[package]
-name = "257_word_squares"
-version = "0.1.0"
-authors = ["rami"]
-
-[dependencies]
