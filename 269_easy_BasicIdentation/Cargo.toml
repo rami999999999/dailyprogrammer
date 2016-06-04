@@ -1,0 +1,6 @@
+[package]
+name = "269_easy_BasicIdentation"
+version = "0.1.0"
+authors = ["Pedro Ramos <pedrolorgaramos@gmail.com>"]
+
+[dependencies]
