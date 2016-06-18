@@ -43,19 +43,23 @@ fn main() {
     
     //starting connection
     let mut buffer:String = String::new();
+    let mut rbuffer: [u8;528] = [0;528];
     let ip = matches.value_of("ip").unwrap_or("127.0.0.1");
     let port = matches.value_of("port").unwrap_or("34254");
     let mut stream = TcpStream::connect((ip, port.parse::<u16>().expect("Port number is invalid"))).expect("Failed to connect");
-
-
+    let mut buffer: String = String::new();
+    let mut read_counter:usize;
 
     //registation of username
-    stream.write("USERNAME".as_bytes());
+    stream.write("USR".as_bytes());
     stream.write(matches.value_of("username").unwrap_or("anonymous").as_bytes());
 
-    stream.read_to_string(&mut buffer);
-    println!("{}", buffer);
-    match buffer.as_str(){
+    read_counter = match stream.read(&mut rbuffer) {
+        Ok(n) => n,
+        Err(_) => {println!("connection failed onr read"); panic!(); 0 as usize},
+    };
+    println!("{:?}", std::str::from_utf8(&rbuffer[..2]).unwrap());
+    match std::str::from_utf8(&rbuffer[..2]).unwrap(){
         "OK" => println!("user registation was sucessfull"),
         "NOK" => {println!("user already being used");panic!()},
         _ => {println!("what!?");unreachable!()},

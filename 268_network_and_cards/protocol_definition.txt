@@ -1,0 +1,24 @@
+ESTABLISHING CONNECTION================
+
+client	-	server
+-------------------
+USR		>	
+username>	
+		< OK/NOK	
+======================================
+
+
+
+
+
+HEARTBEAT=============================
+
+at least every 10 seconds client must send an heartbeat
+
+
+client	-	server
+-------------------
+
+bumbum	>
+		
+=====================================
