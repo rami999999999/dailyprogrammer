@@ -27,7 +27,6 @@ fn main() {
                        .help("server's port. Default is 34254"))
 				  .arg(Arg::with_name("v")
 					   .short("v")
-					   .multiple(true)
 					   .help("Sets the level of verbosity"))
                   .arg(Arg::with_name("debug")
                        .short("d")
@@ -49,8 +48,14 @@ fn main() {
     let mut stream = TcpStream::connect((ip, port.parse::<u16>().expect("Port number is invalid"))).expect("Failed to connect");
     let mut buffer: String = String::new();
     let mut read_counter:usize;
+    let mut v = false;
+
+    if matches.is_present("v"){
+        v = true;
+    }
 
     //registation of username
+    if v {println!("start user registation")};
     stream.write("USR".as_bytes());
     stream.write(matches.value_of("username").unwrap_or("anonymous").as_bytes());
 
@@ -58,16 +63,16 @@ fn main() {
         Ok(n) => n,
         Err(_) => {println!("connection failed onr read"); panic!(); 0 as usize},
     };
-    println!("{:?}", std::str::from_utf8(&rbuffer[..2]).unwrap());
+    if v {println!("{:?}", std::str::from_utf8(&rbuffer[..2]).unwrap());}
     match std::str::from_utf8(&rbuffer[..2]).unwrap(){
-        "OK" => println!("user registation was sucessfull"),
+        "OK" => if v {println!("user registation was sucessfull")},
         "NOK" => {println!("user already being used");panic!()},
-        _ => {println!("what!?");unreachable!()},
+        _ => {if v {println!("what!?. Was expecting OK or NOK")};unreachable!()},
     }
     
     loop{
         sleep(Duration::from_secs(10));
-        match stream.write("bumbum".as_bytes()){
+        match stream.write("...".as_bytes()){
             Ok(_) => (),
             Err(_) => println!("write timeout"),
         }

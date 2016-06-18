@@ -8,8 +8,21 @@ use std::net::{TcpListener, TcpStream};
 use std::thread;
 use std::string::String;
 
+fn usr_command(mut stream: &TcpStream, mut lbuffer: &mut [u8], v:bool,id:i32){
+    if v {println!("thread-{} | executing usr",id)};
+    let mut read_counter:usize;
+    read_counter = match stream.read(&mut lbuffer) {
+        Ok(n) => n,
+        Err(_) => {println!("thread-{} | connection failed onr read",id); panic!(); 0 as usize},
+    };
 
-fn handle_client(mut stream: TcpStream) {
+    if v {println!("thread-{} | incoming:{}",id, std::str::from_utf8(&lbuffer[..read_counter]).unwrap())};
+    let username = String::from_utf8_lossy(&lbuffer[..read_counter]).into_owned();    
+    stream.write("OK".as_bytes());
+    if v {println!("thread-{} | My username is {}",id,username)}
+}
+
+fn handle_client(mut stream: TcpStream, v:bool, id:i32) {
     //short buffer
     let mut buffer: [u8;3] = [0,0,0];
     //long buffer
@@ -17,34 +30,18 @@ fn handle_client(mut stream: TcpStream) {
     let mut read_counter:usize;
     let mut last_con: Tm = time::now();
     
-    //reading command
-    stream.read(&mut buffer);
-    match std::str::from_utf8(&buffer).unwrap() {
-        "USR" => println!("USR recieved"),
-        _ => unreachable!(),
-    }
-    
-
-    read_counter = match stream.read(&mut lbuffer) {
-        Ok(n) => n,
-        Err(_) => {println!("connection failed onr read"); panic!(); 0 as usize},
-    };
-
-    println!("line25:{}",std::str::from_utf8(&lbuffer[..read_counter]).unwrap());
-    let username = buffer.clone();    
-    stream.write("OK".as_bytes()); 
     loop {
         
-        read_counter = match stream.read(&mut lbuffer) {
+        read_counter = match stream.read(&mut buffer) {
             Ok(n) => n,
-            Err(_) => {println!("connection failed onr read"); panic!(); 0 as usize},
+            Err(_) => {println!("thread-{} | connection failed onr read",id); panic!(); 0 as usize},
         };
 
+        if v {println!("thread-{} | incoming:{}",id,std::str::from_utf8(&buffer[..read_counter]).unwrap());}
 
-        println!("{}",std::str::from_utf8(&lbuffer[..read_counter]).unwrap());
-
-        match std::str::from_utf8(&lbuffer[..read_counter]).unwrap() {
-            "bumbum" => {last_con=time::now();println!("I'm alive")},
+        match std::str::from_utf8(&buffer[..read_counter]).unwrap() {
+            "..." => {last_con=time::now(); if v {println!("thread-{} | I'm alive",id)}},
+            "USR" => {last_con=time::now(); usr_command(&mut stream, &mut lbuffer,v,id);},
             _ => unreachable!(),
         }
     }
@@ -67,7 +64,6 @@ fn main() {
                        .help("server's port"))
 				  .arg(Arg::with_name("v")
 					   .short("v")
-					   .multiple(true)
 					   .help("Sets the level of verbosity"))
                   .arg(Arg::with_name("debug")
                        .short("d")
@@ -76,19 +72,22 @@ fn main() {
 				  .get_matches();
 
 
-
+    let mut v:bool = false;
     //starting connection
     let port = matches.value_of("port").unwrap_or("34254");
-
+    let mut id = 0;
     let listener = TcpListener::bind(("127.0.0.1", port.parse::<u16>().expect("Port number is invalid"))).expect("Failed to connect");
-
+    if matches.is_present("v"){
+        v=true;
+    }
     // accept connections and process them, spawning a new thread for each one
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                thread::spawn(move|| {
-                    // connection succeeded
-                    handle_client(stream)
+                id+=1;
+                thread::Builder::new().name(format!("thread-{}",id).to_string()).spawn(move|| {
+                    if v {println!("starting thread-{}",id)}
+                    handle_client(stream, v, id)
                 });
             }
             Err(e) => { /* connection failed */ }
