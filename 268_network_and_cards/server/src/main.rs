@@ -118,11 +118,11 @@ fn main() {
                 });
                 let username = rx.recv().unwrap();
                 if new == true {
-                    p_list.push(Some(Player{username:"anonimous".to_string(),rx: rx.clone()}));
+                    p_list.push(Some(Player{username:"anonimous".to_string(),rx: rx}));
                     new=false;
                 }
                 else {
-                    p_list[id]=User::username(Player{username:String::from(username), rx: rx});
+                    p_list[id as usize]=Some(Player{username:String::from_utf8_lossy(&username).into_owned(), rx: rx});
                 } 
                 //TODO:getusername
 

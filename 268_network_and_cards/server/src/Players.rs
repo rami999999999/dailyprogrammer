@@ -5,11 +5,11 @@ pub type User =  Option<Player>;
 
 pub struct Player{
     //send to a thread
-    username: String,
+    pub username: String,
     //send to a thread
     //tx: mpsc::Sender<[u8;100]>,
     //recieve from a thread
-    rx: mpsc::Receiver<[u8;100]>,
+    pub rx: mpsc::Receiver<[u8;100]>,
 }
 
 
