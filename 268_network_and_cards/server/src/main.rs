@@ -1,34 +1,33 @@
 use std::io::prelude::*;
-use std::env;
+// NOT USED use std::env;
 extern crate clap;
 extern crate time;
 use time::Tm;
-use clap::{Arg, App, SubCommand};
+use clap::{Arg, App};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
 use std::string::String;
 use std::sync::mpsc;
-use std::collections::HashMap;
-mod Players;
-use Players::{Player,User,get_id};
+mod players;
+use players::{Player, get_id};
 
 
 ///Executed function when USR is recieved
 fn usr_command(mut stream: &TcpStream, mut lbuffer: &mut [u8], v:bool,id:i32){
 
     if v {println!("thread-{} | executing usr",id)};
-    let mut read_counter:usize;
+    let read_counter:usize;
 
     read_counter = match stream.read(&mut lbuffer) {
         Ok(n) => n,
-        Err(_) => {println!("thread-{} | connection failed onr read",id); panic!(); 0 as usize},
+        Err(_) => {println!("thread-{} | connection failed onr read",id); 0 as usize},
     };
 
     if v {println!("thread-{} | incoming:{}",id, std::str::from_utf8(&lbuffer[..read_counter]).unwrap())};
 
     let username = String::from_utf8_lossy(&lbuffer[..read_counter]).into_owned();
 
-    stream.write("OK".as_bytes());
+    let _ = stream.write("OK".as_bytes());
 
     if v {println!("thread-{} | My username is {}",id,username)}
 }
@@ -91,7 +90,7 @@ fn main() {
     let mut id = 0;
 
     let  mut p_list : Vec<Option<Player>> = Vec::with_capacity(500 as usize);
-    for i in 0..500 {
+    for _ in 0..500 {
         p_list.push(None);
     }
 
@@ -101,12 +100,13 @@ fn main() {
         v=true;
     }
 
-    let (tx,rx) = mpsc::channel::<[u8;100]>();
+
 
     // accept connections and process them, spawning a new thread for each one
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
+                let (tx,rx) = mpsc::channel::<[u8;100]>();
                 let mut new = false;
                 //Getting id
                 id = get_id(&p_list);
@@ -114,16 +114,16 @@ fn main() {
 
                 thread::Builder::new().name(format!("thread-{}",id).to_string()).spawn(move|| {
                     if v {println!("starting thread-{}",id)}
-                    handle_client(stream, v, id, tx)
+                    handle_client(stream, v, id, tx);
                 });
                 let username = rx.recv().unwrap();
                 if new == true {
-                    p_list.push(Some(Player{username:"anonimous".to_string(),rx: rx}));
+                    p_list.push(Some(Player{username:"anonimous".to_string(),srx: rx}));
                     new=false;
                 }
                 else {
-                    p_list[id as usize]=Some(Player{username:String::from_utf8_lossy(&username).into_owned(), rx: rx});
-                } 
+                    p_list[id as usize]=Some(Player{username:String::from_utf8_lossy(&username).into_owned(), srx: rx});
+                }
                 //TODO:getusername
 
 
