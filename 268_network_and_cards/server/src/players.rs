@@ -9,7 +9,8 @@ pub struct Player{
     //send to a thread
     //tx: mpsc::Sender<[u8;100]>,
     //recieve from a thread
-    pub srx: mpsc::Receiver<[u8;100]>,
+    pub Prx: mpsc::Receiver<[u8;100]>,
+    pub Ptx: mpsc::Sender<[u8;100]>,
 }
 
 

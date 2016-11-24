@@ -33,7 +33,7 @@ fn usr_command(mut stream: &TcpStream, mut lbuffer: &mut [u8], v:bool,id:i32){
 }
 
 ///function that is started for each recieved connection
-fn handle_client(mut stream: TcpStream, v:bool, id:i32, tx: mpsc::Sender<[u8;100]>) {
+fn handle_client(mut stream: TcpStream, v:bool, id:i32, tx: mpsc::Sender<[u8;100]>, rx: mpsc::Receiver<[u8;100]>) {
 
     //short buffer
     let mut buffer: [u8;3] = [0,0,0];
@@ -106,7 +106,8 @@ fn main() {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                let (tx,rx) = mpsc::channel::<[u8;100]>();
+                let (tx_thread,rx) = mpsc::channel::<[u8;100]>();
+                let (tx,rx_thread) = mpsc::channel::<[u8;100]>();
                 let mut new = false;
                 //Getting id
                 id = get_id(&p_list);
@@ -114,15 +115,15 @@ fn main() {
 
                 thread::Builder::new().name(format!("thread-{}",id).to_string()).spawn(move|| {
                     if v {println!("starting thread-{}",id)}
-                    handle_client(stream, v, id, tx);
+                    handle_client(stream, v, id, tx_thread, rx_thread);
                 });
                 let username = rx.recv().unwrap();
                 if new == true {
-                    p_list.push(Some(Player{username:"anonimous".to_string(),srx: rx}));
+                    p_list.push(Some(Player{username:"anonimous".to_string(),Prx: rx, Ptx: tx}));
                     new=false;
                 }
                 else {
-                    p_list[id as usize]=Some(Player{username:String::from_utf8_lossy(&username).into_owned(), srx: rx});
+                    p_list[id as usize]=Some(Player{username:String::from_utf8_lossy(&username).into_owned(), Prx: rx, Ptx: tx});
                 }
                 //TODO:getusername
 
